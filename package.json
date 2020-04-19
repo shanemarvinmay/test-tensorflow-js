@@ -1,0 +1,28 @@
+{
+  "name": "test-tensorflow",
+  "version": "1.0.0",
+  "description": "change later",
+  "main": "index.js",
+  "scripts": {
+    "test": "change later",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shanemarvinmay/test-tensorflow-js.git"
+  },
+  "keywords": [
+    "change",
+    "later"
+  ],
+  "author": "shanemarvinmay",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shanemarvinmay/test-tensorflow-js/issues"
+  },
+  "homepage": "https://github.com/shanemarvinmay/test-tensorflow-js#readme",
+  "dependencies": {
+    "@tensorflow/tfjs-node": "^1.7.2",
+    "fs": "0.0.1-security"
+  }
+}
