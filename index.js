@@ -4,6 +4,9 @@ const tf = require('@tensorflow/tfjs');
 require('@tensorflow/tfjs-node');
 const fs = require('fs');
 const csv=require("csvtojson/v2");
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000;
 
 // cars_data.csv : 'highway-mpg','city-mpg','horsepower','price'
 // cardataset.csv 'highway-mpg'("highway MPG"),("city mpg")'city-mpg',("Engine HP")'horsepower','year'("Year"),'price'("MSRP")
@@ -138,12 +141,27 @@ let makeAndTrain = async () => {
 };
 // makeAndTrain();
 
-const loadAndRun = async () => {
+const loadAndRun = async (features, callback) => {
     const model = await tf.loadLayersModel('file://./models/d1-model/model.json');
     // console.log(model);
-    let input = tf.tensor([30]);
+    let input = tf.tensor([features]);
     let output = model.predict(input).arraySync();
     output = output[0][0] * 50000;
     console.log( output );
+    callback(output);
 };
-loadAndRun();
+// loadAndRun(/*need input and callback now!*/);
+
+app.get('/', (req, res) => {
+    let hwy = req.query.hwy || 26;
+    hwy = parseInt(hwy);
+    console.log("hwy: "+hwy);
+    try{
+        loadAndRun(hwy, (output) => res.send("Value: "+ output) );
+    }catch(err){
+        console.log("\n~~~~~~~~~\nHey! Something went wrong...\n~~~~~~~~~\n");
+        console.log(err);
+    }
+});
+
+app.listen(port, () => console.log(`App listening at http://localhost:${port}`));
