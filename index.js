@@ -59,13 +59,12 @@ let createD1Json = () => {
     // write d1_obj to json file 
     d1_obj = JSON.stringify(d1_obj);
     fs.writeFileSync('datasets/json/d1.json', d1_obj);
+    return JSON.parse(d1_obj);
 };
-// createD1Json();
-
 let createD2Json = async () => {
     const jsonArray=await csv().fromFile("./datasets/numbers/cardataset.csv");
     // console.log(jsonArray[0]['highway MPG']);
-    console.log(jsonArray[0]);
+    // console.log(jsonArray[0]);
     
     // // 'highway-mpg'("highway MPG"),("city mpg")'city-mpg','horsepower','year'("Year"),'price'("MSRP")
     // // getting features and label
@@ -94,6 +93,57 @@ let createD2Json = async () => {
     // write d2_obj to json file 
     d2_obj = JSON.stringify(d2_obj);
     fs.writeFileSync('datasets/json/d2.json', d2_obj);
+    return JSON.parse(d2_obj);
 };
-// createD2Json();
+let createModel = () => {
+    const model = tf.sequential({
+        layers: [
+            tf.layers.dense({inputShape:[1], units:1, useBias:true}),
+            tf.layers.dense({units: 1, useBias: true})
+        ]
+    });
+    return model
+};
+let trainModel = async (model, inputs, labels) => {
+    model.compile({
+        optimizer: tf.train.adam(),
+        loss: tf.losses.meanSquaredError,
+        metrics: ['mse']
+    });
+    const batchSize = 32;
+    const epochs = 50;
+    return await model.fit(inputs, labels, {
+        batchSize: batchSize,
+        epochs: epochs,
+        shuffle: true
+    });
+}
 
+let makeAndTrain = async () => {
+    let d1 = createD1Json();
+    let d2 = fs.readFileSync("datasets/json/d2.json", { encoding: 'utf8', flag: 'r' });//createD2Json();
+    d2 = JSON.parse(d2);
+    const model = createModel();
+    let input = tf.tensor(d1.hwy);
+    let output = tf.tensor(d1.price);
+    console.log(input);
+    console.log(output);
+    await trainModel(model, input, output);
+    console.log('done training');
+    let tempInput = tf.tensor(input.arraySync());
+    let p = model.predict(tempInput);
+    console.log("predicted" + p + " actual value " + d1.price[0]);
+    const saveResult = await model.save('file://./models/d1-model');
+    // console.log(saveResult);
+};
+// makeAndTrain();
+
+const loadAndRun = async () => {
+    const model = await tf.loadLayersModel('file://./models/d1-model/model.json');
+    // console.log(model);
+    let input = tf.tensor([30]);
+    let output = model.predict(input).arraySync();
+    output = output[0][0] * 50000;
+    console.log( output );
+};
+loadAndRun();
