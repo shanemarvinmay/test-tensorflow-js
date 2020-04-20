@@ -153,7 +153,7 @@ const loadAndRun = async (features, callback) => {
 // loadAndRun(/*need input and callback now!*/);
 
 app.get('/', (req, res) => {
-    let hwy = req.query.hwy || 26;
+    let hwy = req.query.hwy || (Math.floor(Math.random() * Math.floor(20)) + 20);
     hwy = parseInt(hwy);
     console.log("hwy: "+hwy);
     try{
