@@ -7,6 +7,8 @@ const csv=require("csvtojson/v2");
 const express = require('express');
 const app = express();
 const port = process.env.PORT || 3000;
+const mobilenet = require('@tensorflow-models/mobilenet');
+const tfnode = require('@tensorflow/tfjs-node');
 
 // cars_data.csv : 'highway-mpg','city-mpg','horsepower','price'
 // cardataset.csv 'highway-mpg'("highway MPG"),("city mpg")'city-mpg',("Engine HP")'horsepower','year'("Year"),'price'("MSRP")
@@ -152,12 +154,38 @@ const loadAndRun = async (features, callback) => {
 };
 // loadAndRun(/*need input and callback now!*/);
 
+const readImage = (path) => {
+    const imageBuffer = fs.readFileSync(path);
+    const tfImage = tfnode.node.decodeImage(imageBuffer);
+    return tfImage;
+}
+
+const imageClassification = async (path, callback) => {
+    const image = readImage(path);
+    const mobilenetModel = await mobilenet.load();
+    const predictions = await mobilenetModel.classify(image);
+    console.log(predictions);
+    callback(predictions);
+    return predictions;
+}
+
 app.get('/', (req, res) => {
     let hwy = req.query.hwy || (Math.floor(Math.random() * Math.floor(20)) + 20);
     hwy = parseInt(hwy);
     console.log("hwy: "+hwy);
     try{
         loadAndRun(hwy, (output) => res.send("Value: "+ output) );
+        imageClassification("./datasets/images/cars/1.jpg", ((predictions) => res.send(predictions)));
+    }catch(err){
+        console.log("\n~~~~~~~~~\nHey! Something went wrong...\n~~~~~~~~~\n");
+        console.log(err);
+    }
+});
+app.get('/image', (req, res) => {
+    let image = req.query.image || null;
+    console.log("image: "+image);
+    try{
+        imageClassification("./datasets/images/cars/1.jpg", ((predictions) => res.send(predictions)));
     }catch(err){
         console.log("\n~~~~~~~~~\nHey! Something went wrong...\n~~~~~~~~~\n");
         console.log(err);
