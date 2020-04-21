@@ -9,6 +9,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 const mobilenet = require('@tensorflow-models/mobilenet');
 const tfnode = require('@tensorflow/tfjs-node');
+const formidable = require('formidable');
 // cars_data.csv : 'highway-mpg','city-mpg','horsepower','price'
 // cardataset.csv 'highway-mpg'("highway MPG"),("city mpg")'city-mpg',("Engine HP")'horsepower','year'("Year"),'price'("MSRP")
 // car_sale_advertisements.csv 'mileage','make','year'
@@ -180,22 +181,45 @@ app.get('/', (req, res) => {
         console.log(err);
     }
 });
+
 app.post('/image', (req, res) => {
-    console.log(req.body);
-    let image = req.body.image || null;
-    console.log("image: " + image);
-    // if (image != null) {
-    //     var base64Data = req.rawBody.replace(/^data:image\/png;base64,/, "");
-    //     fs.writeFile("image.png", base64Data, 'base64', function (err) {
-    //         console.log(err);
-    //     });
-    // }
-    // try {
-    //     imageClassification("./datasets/images/cars/1.jpg", ((predictions) => res.send(predictions)));
-    // } catch (err) {
-    //     console.log("\n~~~~~~~~~\nHey! Something went wrong...\n~~~~~~~~~\n");
-    //     console.log(err);
-    // }
+    var form = new formidable.IncomingForm();
+    form.parse(req, function (err, fields, files) {
+        var oldpath = files.filetoupload.path;
+        var newpath = './' + files.filetoupload.name;
+        fs.rename(oldpath, newpath, function (err) {
+            console.log(newpath);
+            if (err) throw err;
+            try {
+                imageClassification(newpath/*"./datasets/images/car3.jpeg"*/, ((predictions) => {
+                    for(let i = 0; i < predictions.length; i++){
+                        if( predictions[i]["className"].indexOf("car") > 0 || predictions[i]["className"].indexOf("minivan") > 0 || predictions[i]["className"].indexOf("truck") > 0 || predictions[i]["className"].indexOf("wagon") > 0  ){
+                            let result = Math.floor(Math.random() * Math.floor(20000)) + 20000;
+                            res.send("Value: " + result);
+                            return;
+                        }
+                    }
+                    res.send("not a car but rather " + predictions[0]["className"]);
+                })).catch((err)=>{
+                    console.log("error with prediction (probably because it's not a jpg)",err);
+                    res.send("error with prediction (probably because it's not a jpg)");
+                });
+            } catch (err) {
+                console.log("\n~~~~~~~~~\nHey! Something went wrong...\n~~~~~~~~~\n");
+                console.log(err);
+            }
+        });
+    });
+});
+
+
+app.get('/demo', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.write('<form action="image" method="post" enctype="multipart/form-data">');
+    res.write('<input type="file" name="filetoupload"><br>');
+    res.write('<input type="submit">');
+    res.write('</form>');
+    return res.end();
 });
 
 app.listen(port, () => console.log(`App listening at http://localhost:${port}`));
