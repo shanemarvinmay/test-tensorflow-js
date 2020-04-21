@@ -175,7 +175,7 @@ app.get('/', (req, res) => {
     console.log("hwy: " + hwy);
     try {
         loadAndRun(hwy, (output) => res.send("Value: " + output));
-        imageClassification("./datasets/images/cars/1.jpg", ((predictions) => res.send(predictions)));
+        // imageClassification("./datasets/images/cars/1.jpg", ((predictions) => res.send(predictions)));
     } catch (err) {
         console.log("\n~~~~~~~~~\nHey! Something went wrong...\n~~~~~~~~~\n");
         console.log(err);
