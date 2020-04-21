@@ -3,13 +3,12 @@ const tf = require('@tensorflow/tfjs');
 // Use '@tensorflow/tfjs-node-gpu' if running with GPU.
 require('@tensorflow/tfjs-node');
 const fs = require('fs');
-const csv=require("csvtojson/v2");
+const csv = require("csvtojson/v2");
 const express = require('express');
 const app = express();
 const port = process.env.PORT || 3000;
 const mobilenet = require('@tensorflow-models/mobilenet');
 const tfnode = require('@tensorflow/tfjs-node');
-
 // cars_data.csv : 'highway-mpg','city-mpg','horsepower','price'
 // cardataset.csv 'highway-mpg'("highway MPG"),("city mpg")'city-mpg',("Engine HP")'horsepower','year'("Year"),'price'("MSRP")
 // car_sale_advertisements.csv 'mileage','make','year'
@@ -43,16 +42,16 @@ let createD1Json = () => {
             // console.log(j);
             if (d1[i][j] == '?') { d1[i][j] = 0; }
             if (j == hwy) {
-                d1_obj["hwy"].push( parseInt( d1[i][j] ));
+                d1_obj["hwy"].push(parseInt(d1[i][j]));
             }
             else if (j == cty) {
-                d1_obj["cty"].push( parseInt( d1[i][j] ));
+                d1_obj["cty"].push(parseInt(d1[i][j]));
             }
             else if (j == hp) {
-                d1_obj["hp"].push( parseInt( d1[i][j] ));
+                d1_obj["hp"].push(parseInt(d1[i][j]));
             }
             else if (j == price) {
-                d1_obj["price"].push( parseInt( d1[i][j] ));
+                d1_obj["price"].push(parseInt(d1[i][j]));
             }
         }
     }
@@ -67,26 +66,26 @@ let createD1Json = () => {
     return JSON.parse(d1_obj);
 };
 let createD2Json = async () => {
-    const jsonArray=await csv().fromFile("./datasets/numbers/cardataset.csv");
+    const jsonArray = await csv().fromFile("./datasets/numbers/cardataset.csv");
     // console.log(jsonArray[0]['highway MPG']);
     // console.log(jsonArray[0]);
-    
+
     // // 'highway-mpg'("highway MPG"),("city mpg")'city-mpg','horsepower','year'("Year"),'price'("MSRP")
     // // getting features and label
     let d2_obj = {
         "hwy": [],
         "cty": [],
         "hp": [],
-        "yr":[],
+        "yr": [],
         "price": []
     };
     // console.log(d2[1][hwy]);
     for (let i = 0; i < jsonArray.length; i++) {
-       d2_obj["hwy"].push( parseInt( jsonArray[i]["highway MPG"] ) );
-       d2_obj["cty"].push( parseInt( jsonArray[i]["city mpg"] ) );
-       d2_obj["hp"].push( parseInt( jsonArray[i]["Engine HP"] ) );
-       d2_obj["yr"].push( parseInt( jsonArray[i]["Year"] ) );
-       d2_obj["price"].push( parseInt( jsonArray[i]["MSRP"] ) );
+        d2_obj["hwy"].push(parseInt(jsonArray[i]["highway MPG"]));
+        d2_obj["cty"].push(parseInt(jsonArray[i]["city mpg"]));
+        d2_obj["hp"].push(parseInt(jsonArray[i]["Engine HP"]));
+        d2_obj["yr"].push(parseInt(jsonArray[i]["Year"]));
+        d2_obj["price"].push(parseInt(jsonArray[i]["MSRP"]));
     }
     // console.log(d2_obj["hwy"].length == d2_obj["cty"].length == d2_obj["hp"].length == d2_obj["yr"].length == d2_obj["price"].length);
     // console.log(d2_obj["cty"].length);
@@ -103,8 +102,8 @@ let createD2Json = async () => {
 let createModel = () => {
     const model = tf.sequential({
         layers: [
-            tf.layers.dense({inputShape:[1], units:1, useBias:true}),
-            tf.layers.dense({units: 1, useBias: true})
+            tf.layers.dense({ inputShape: [1], units: 1, useBias: true }),
+            tf.layers.dense({ units: 1, useBias: true })
         ]
     });
     return model
@@ -149,7 +148,7 @@ const loadAndRun = async (features, callback) => {
     let input = tf.tensor([features]);
     let output = model.predict(input).arraySync();
     output = output[0][0] * 50000;
-    console.log( output );
+    console.log(output);
     callback(output);
 };
 // loadAndRun(/*need input and callback now!*/);
@@ -172,24 +171,32 @@ const imageClassification = async (path, callback) => {
 app.get('/', (req, res) => {
     let hwy = req.query.hwy || (Math.floor(Math.random() * Math.floor(20)) + 20);
     hwy = parseInt(hwy);
-    console.log("hwy: "+hwy);
-    try{
-        loadAndRun(hwy, (output) => res.send("Value: "+ output) );
+    console.log("hwy: " + hwy);
+    try {
+        loadAndRun(hwy, (output) => res.send("Value: " + output));
         imageClassification("./datasets/images/cars/1.jpg", ((predictions) => res.send(predictions)));
-    }catch(err){
+    } catch (err) {
         console.log("\n~~~~~~~~~\nHey! Something went wrong...\n~~~~~~~~~\n");
         console.log(err);
     }
 });
-app.get('/image', (req, res) => {
-    let image = req.query.image || null;
-    console.log("image: "+image);
-    try{
-        imageClassification("./datasets/images/cars/1.jpg", ((predictions) => res.send(predictions)));
-    }catch(err){
-        console.log("\n~~~~~~~~~\nHey! Something went wrong...\n~~~~~~~~~\n");
-        console.log(err);
-    }
+app.post('/image', (req, res) => {
+    console.log(req.body);
+    let image = req.body.image || null;
+    console.log("image: " + image);
+    // if (image != null) {
+    //     var base64Data = req.rawBody.replace(/^data:image\/png;base64,/, "");
+    //     fs.writeFile("image.png", base64Data, 'base64', function (err) {
+    //         console.log(err);
+    //     });
+    // }
+    // try {
+    //     imageClassification("./datasets/images/cars/1.jpg", ((predictions) => res.send(predictions)));
+    // } catch (err) {
+    //     console.log("\n~~~~~~~~~\nHey! Something went wrong...\n~~~~~~~~~\n");
+    //     console.log(err);
+    // }
 });
 
 app.listen(port, () => console.log(`App listening at http://localhost:${port}`));
+
