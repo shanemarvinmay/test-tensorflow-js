@@ -187,27 +187,61 @@ app.post('/image', (req, res) => {
     form.parse(req, function (err, fields, files) {
         var oldpath = files.filetoupload.path;
         var newpath = './' + files.filetoupload.name;
-        fs.rename(oldpath, newpath, function (err) {
-            console.log(newpath);
+        // fs.rename(oldpath, newpath, function (err) {
+        //     console.log(newpath);
+        //     if (err) throw err;
+        //     try {
+        //         imageClassification(newpath/*"./datasets/images/car3.jpeg"*/, ((predictions) => {
+        //             for (let i = 0; i < predictions.length; i++) {
+        //                 if (predictions[i]["className"].indexOf("car") > 0 || predictions[i]["className"].indexOf("minivan") > 0 || predictions[i]["className"].indexOf("truck") > 0 || predictions[i]["className"].indexOf("wagon") > 0) {
+        //                     let result = Math.floor(Math.random() * Math.floor(20000)) + 20000;
+        //                     res.send("Value: " + result);
+        //                     return;
+        //                 }
+        //             }
+        //             res.send("not a car but rather " + predictions[0]["className"]);
+        //         })).catch((err) => {
+        //             console.log("error with prediction (probably because it's not a jpg)", err);
+        //             res.send("error with prediction (probably because it's not a jpg)");
+        //         });
+        //     } catch (err) {
+        //         console.log("\n~~~~~~~~~\nHey! Something went wrong...\n~~~~~~~~~\n");
+        //         console.log(err);
+        //     }
+        // });
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        fs.readFile(oldpath, function (err, data) {
             if (err) throw err;
-            try {
-                imageClassification(newpath/*"./datasets/images/car3.jpeg"*/, ((predictions) => {
-                    for(let i = 0; i < predictions.length; i++){
-                        if( predictions[i]["className"].indexOf("car") > 0 || predictions[i]["className"].indexOf("minivan") > 0 || predictions[i]["className"].indexOf("truck") > 0 || predictions[i]["className"].indexOf("wagon") > 0  ){
-                            let result = Math.floor(Math.random() * Math.floor(20000)) + 20000;
-                            res.send("Value: " + result);
-                            return;
+            console.log('File read!');
+
+            // Write the file
+            fs.writeFile(newpath, data, function (err) {
+                if (err) throw err;
+                try {
+                    imageClassification(newpath/*"./datasets/images/car3.jpeg"*/, ((predictions) => {
+                        for (let i = 0; i < predictions.length; i++) {
+                            if (predictions[i]["className"].indexOf("car") > 0 || predictions[i]["className"].indexOf("minivan") > 0 || predictions[i]["className"].indexOf("truck") > 0 || predictions[i]["className"].indexOf("wagon") > 0) {
+                                let result = Math.floor(Math.random() * Math.floor(20000)) + 20000;
+                                res.send("Value: " + result);
+                                return;
+                            }
                         }
-                    }
-                    res.send("not a car but rather " + predictions[0]["className"]);
-                })).catch((err)=>{
-                    console.log("error with prediction (probably because it's not a jpg)",err);
-                    res.send("error with prediction (probably because it's not a jpg)");
-                });
-            } catch (err) {
-                console.log("\n~~~~~~~~~\nHey! Something went wrong...\n~~~~~~~~~\n");
-                console.log(err);
-            }
+                        res.send("not a car but rather " + predictions[0]["className"]);
+                    })).catch((err) => {
+                        console.log("error with prediction (probably because it's not a jpg)", err);
+                        res.send("error with prediction (probably because it's not a jpg)");
+                    });
+                } catch (err) {
+                    console.log("\n~~~~~~~~~\nHey! Something went wrong...\n~~~~~~~~~\n");
+                    console.log(err);
+                }
+            });
+
+            // Delete the file
+            fs.unlink(oldpath, function (err) {
+                if (err) throw err;
+                console.log('File deleted!');
+            });
         });
     });
 });
